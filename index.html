@@ -1533,6 +1533,17 @@ function buildChartByDate() {
   const transMs = TRANSITION_DATE.getTime();
   const dispMs = inp.dispDate.getTime();
 
+  // Fix the 1 July 2027 transition value once — it represents BTC's value on a
+  // specific calendar date and shouldn't drift as we sweep the disposal date.
+  let fixedTransitionValue = inp.transitionValue;
+  if (!fixedTransitionValue || isNaN(fixedTransitionValue)) {
+    if (inp.acqDate < TRANSITION_DATE && inp.dispDate >= TRANSITION_DATE) {
+      fixedTransitionValue = estimateTransitionValue(inp.costBase, inp.disposalValue, inp.acqDate, inp.dispDate);
+    } else {
+      fixedTransitionValue = NaN;
+    }
+  }
+
   for (let i = 0; i < points; i++) {
     const d = new Date(startDate.getTime() + stepMs * i);
     const lbl = d.toLocaleDateString('en-AU', { month: 'short', year: '2-digit' });
@@ -1542,7 +1553,7 @@ function buildChartByDate() {
       ...inp,
       dispDate: d,
       disposalValue: inp.disposalValue,
-      transitionValue: NaN
+      transitionValue: fixedTransitionValue
     });
     current.push(Math.max(0, r.curTax));
     proposed.push(Math.max(0, r.propTax));
