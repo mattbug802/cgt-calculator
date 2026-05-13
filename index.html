@@ -646,7 +646,7 @@
   </div>
 
   <div class="note" style="margin-top:1.5rem">
-    <strong>Disclaimer:</strong> This calculator provides estimates based on publicly announced policy from the 2026-27 Federal Budget. Detailed legislation has not yet been released. CPI data is approximate (ABS All Groups, Weighted Average of Eight Capital Cities, base Sep 2025 = 100). Consult a registered tax professional for advice specific to your situation.
+    <strong>Disclaimer:</strong> Estimates only, based on publicly announced policy from the 2026-27 Federal Budget — detailed legislation is not yet released. Simplifications: (1) the gain is taxed entirely at your selected marginal rate (no bracket-creep modelling); (2) Medicare Levy Surcharge and capital loss carry-forwards are not included; (3) the 30% minimum is applied only to gains taxed under the new indexation method (consistent with the Pitcher Partners worked example, but the budget text is ambiguous); (4) the 1 July 2027 transition value is estimated via compound-growth interpolation, which may differ from the legislated "prescribed apportionment formula"; (5) CPI series uses ABS All Groups (Weighted Average of Eight Capital Cities), base Sep 2025 = 100; quarters beyond Mar 2026 are projected at your chosen rate. Consult a registered tax agent for advice specific to your situation.
   </div>
 </div>
 
@@ -1008,13 +1008,15 @@ function computeCGT(params) {
     const preDisc = held12 ? preGain * 0.5 : preGain;
     const preTax = preDisc * totalRate;
 
-    const cpiT = getCPI(dateToQuarterKey(TRANSITION_DATE), futureInflation);
-    const cpiD = getCPI(dateToQuarterKey(dispDate), futureInflation);
-    const idxFactor = (cpiT && cpiD) ? cpiD / cpiT : 1;
-    const indexedTransVal = transVal * idxFactor;
+    let indexedTransVal = transVal;
+    if (held12) {
+      const cpiT = getCPI(dateToQuarterKey(TRANSITION_DATE), futureInflation);
+      const cpiD = getCPI(dateToQuarterKey(dispDate), futureInflation);
+      const idxFactor = (cpiT && cpiD) ? cpiD / cpiT : 1;
+      indexedTransVal = transVal * idxFactor;
+    }
     const postGain = Math.max(0, disposalValue - indexedTransVal);
-    const postHeld12 = daysBetween(TRANSITION_DATE, dispDate) > 365;
-    const postRate = postHeld12 ? propMinRate : totalRate;
+    const postRate = held12 ? propMinRate : totalRate;
     propTax = preTax + postGain * postRate;
   } else {
     if (held12) {
@@ -1154,14 +1156,16 @@ function calculate() {
     const preDisc = held12 ? preGain * 0.5 : preGain;
     const preTax = preDisc * totalRate;
 
-    const cpiTransition = getCPI(dateToQuarterKey(TRANSITION_DATE));
-    const cpiDisposal = getCPI(dateToQuarterKey(dispDate));
-    const indexFactor = (cpiTransition && cpiDisposal) ? cpiDisposal / cpiTransition : 1;
-    const indexedTransVal = transVal * indexFactor;
+    // Indexation and 30% minimum require >12 months TOTAL holding period
+    let indexedTransVal = transVal;
+    if (held12) {
+      const cpiTransition = getCPI(dateToQuarterKey(TRANSITION_DATE));
+      const cpiDisposal = getCPI(dateToQuarterKey(dispDate));
+      const indexFactor = (cpiTransition && cpiDisposal) ? cpiDisposal / cpiTransition : 1;
+      indexedTransVal = transVal * indexFactor;
+    }
     const postGain = Math.max(0, disposalValue - indexedTransVal);
-
-    const postHeld12 = daysBetween(TRANSITION_DATE, dispDate) > 365;
-    const postRate = postHeld12 ? propMinRate : totalRate;
+    const postRate = held12 ? propMinRate : totalRate;
     const postTax = postGain * postRate;
 
     propTax = preTax + postTax;
