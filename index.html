@@ -386,6 +386,7 @@
         <div class="btc-header-left">
           <h2>Bitcoin (BTC/AUD)</h2>
           <div class="btc-price-now" id="btcPriceNow">Loading...</div>
+          <div style="font-size:0.82rem; color:var(--muted); margin-top:0.3rem;">Click anywhere on the chart to select your acquisition date and cost base</div>
         </div>
         <div class="btc-range-btns" id="btcRangeBtns">
           <button data-range="365">1Y</button>
@@ -1635,7 +1636,8 @@ window.addEventListener('resize', () => {
 // Set default dates
 const today = new Date();
 document.getElementById('acquisitionDate').value = '2021-01-15';
-document.getElementById('disposalDate').value = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+document.getElementById('disposalDate').value = '2030-01-01';
+document.getElementById('disposalValue').value = '1000000';
 
 updateTransitionUI();
 </script>
