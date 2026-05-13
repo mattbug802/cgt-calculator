@@ -29,7 +29,17 @@
   h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
   .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 2rem; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-  @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .container { padding: 1.25rem 1rem; }
+    h1 { font-size: 1.4rem; }
+    .btc-chart-wrapper { height: 260px; }
+    .chart-wrapper { height: 300px; }
+    .btc-header { flex-direction: column; }
+    .btc-range-btns { align-self: flex-start; }
+    .chart-legend { flex-wrap: wrap; gap: 0.75rem; }
+  }
   .card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -705,7 +715,8 @@ function drawBtcChart(hoverIdx) {
   ctx.scale(dpr, dpr);
   const W = rect.width, H = rect.height;
 
-  const pad = { top: 15, right: 15, bottom: 40, left: 70 };
+  const isMobile = W < 500;
+  const pad = { top: 15, right: 10, bottom: 40, left: isMobile ? 50 : 70 };
   const cw = W - pad.left - pad.right;
   const ch = H - pad.top - pad.bottom;
 
@@ -724,10 +735,11 @@ function drawBtcChart(hoverIdx) {
   // y-axis grid
   ctx.strokeStyle = '#1e2130';
   ctx.lineWidth = 0.5;
-  ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+  const fontSize = isMobile ? 10 : 11;
+  ctx.font = fontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
   ctx.fillStyle = '#6b6f82';
   ctx.textAlign = 'right';
-  const yTicks = 5;
+  const yTicks = isMobile ? 4 : 5;
   for (let i = 0; i <= yTicks; i++) {
     const val = (pMax / yTicks) * i;
     const y = yP(val);
@@ -736,17 +748,17 @@ function drawBtcChart(hoverIdx) {
     if (val >= 1000000) lbl = '$' + (val / 1000000).toFixed(1) + 'M';
     else if (val >= 1000) lbl = '$' + (val / 1000).toFixed(0) + 'k';
     else lbl = '$' + val.toFixed(0);
-    ctx.fillText(lbl, pad.left - 8, y + 4);
+    ctx.fillText(lbl, pad.left - 6, y + 4);
   }
 
   // x-axis labels
   ctx.textAlign = 'center';
   ctx.fillStyle = '#6b6f82';
-  const xTickCount = Math.min(n, 7);
+  const xTickCount = Math.min(n, isMobile ? 4 : 7);
   const xStep = Math.max(1, Math.floor((n - 1) / (xTickCount - 1)));
   for (let i = 0; i < n; i += xStep) {
     const d = data[i].date;
-    ctx.fillText(d.toLocaleDateString('en-AU', { month: 'short', year: '2-digit' }), xP(i), H - pad.bottom + 18);
+    ctx.fillText(d.toLocaleDateString('en-AU', { month: 'short', year: '2-digit' }), xP(i), H - pad.bottom + 16);
   }
 
   // gradient fill
@@ -1277,7 +1289,8 @@ function drawChart(canvas, data) {
   const W = rect.width;
   const H = rect.height;
 
-  const pad = { top: 20, right: 20, bottom: 45, left: 70 };
+  const isMobile = W < 500;
+  const pad = { top: 20, right: 15, bottom: isMobile ? 35 : 45, left: isMobile ? 50 : 70 };
   const cw = W - pad.left - pad.right;
   const ch = H - pad.top - pad.bottom;
 
@@ -1296,8 +1309,9 @@ function drawChart(canvas, data) {
   // grid lines
   ctx.strokeStyle = CHART_COLORS.grid;
   ctx.lineWidth = 0.5;
-  const yTicks = 5;
-  ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+  const fontSize = isMobile ? 10 : 11;
+  const yTicks = isMobile ? 4 : 5;
+  ctx.font = fontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
   ctx.fillStyle = CHART_COLORS.axis;
   ctx.textAlign = 'right';
   for (let i = 0; i <= yTicks; i++) {
@@ -1311,32 +1325,34 @@ function drawChart(canvas, data) {
     if (val >= 1000000) label = '$' + (val / 1000000).toFixed(1) + 'M';
     else if (val >= 1000) label = '$' + (val / 1000).toFixed(0) + 'k';
     else label = '$' + val.toFixed(0);
-    ctx.fillText(label, pad.left - 8, y + 4);
+    ctx.fillText(label, pad.left - 6, y + 4);
   }
 
   // x labels
   ctx.textAlign = 'center';
   ctx.fillStyle = CHART_COLORS.axis;
-  const xTickCount = Math.min(n, 8);
+  const xTickCount = Math.min(n, isMobile ? 4 : 8);
   const xStep = Math.max(1, Math.floor((n - 1) / (xTickCount - 1)));
   for (let i = 0; i < n; i += xStep) {
     const x = xPos(i);
-    ctx.fillText(labels[i], x, H - pad.bottom + 18);
+    ctx.fillText(labels[i], x, H - pad.bottom + 16);
   }
-  if ((n - 1) % xStep !== 0) {
-    ctx.fillText(labels[n - 1], xPos(n - 1), H - pad.bottom + 18);
+  if (!isMobile && (n - 1) % xStep !== 0) {
+    ctx.fillText(labels[n - 1], xPos(n - 1), H - pad.bottom + 16);
   }
 
   // axis labels
-  ctx.fillStyle = CHART_COLORS.axis;
-  ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(xLabel, pad.left + cw / 2, H - 4);
-  ctx.save();
-  ctx.translate(14, pad.top + ch / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillText(yLabel, 0, 0);
-  ctx.restore();
+  if (!isMobile) {
+    ctx.fillStyle = CHART_COLORS.axis;
+    ctx.font = fontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(xLabel, pad.left + cw / 2, H - 4);
+    ctx.save();
+    ctx.translate(14, pad.top + ch / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+  }
 
   // marker line (transition date or cost base)
   if (markerX !== null && markerX !== undefined) {
